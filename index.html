@@ -1,33 +1,39 @@
-const fs = require('fs');
-const xlsx = require('xlsx');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Number Lookup</title>
+</head>
+<body>
+    <h1>Register Number Lookup</h1>
+    <label for="registerNumber">Enter Register Number:</label>
+    <input type="text" id="registerNumber">
+    <button onclick="fetchResult()">Fetch Result</button>
+    <p id="resultDisplay"></p>
 
-function displayResult(registerNumber, filePath) {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
+    <script>
+        async function fetchResult() {
+            const registerNumber = document.getElementById('registerNumber').value;
 
-    // Assuming register numbers are in column A and results are in column B
-    const registerColumn = 'A';
-    const resultColumn = 'B';
+            if (!registerNumber) {
+                alert('Please enter a register number.');
+                return;
+            }
 
-    const registerAddress = `${registerColumn}1:${registerColumn}${sheet['!ref'].e.r}`;
-    const resultAddress = `${resultColumn}1:${resultColumn}${sheet['!ref'].e.r}`;
+            try {
+                const response = await fetch(`/api/fetchResult?registerNumber=${registerNumber}`);
+                const result = await response.json();
 
-    const registerNumbers = xlsx.utils.sheet_to_json(sheet, { range: registerAddress });
-    const results = xlsx.utils.sheet_to_json(sheet, { range: resultAddress });
-
-    const registerIndex = registerNumbers.findIndex((row) => row[registerColumn] === registerNumber);
-
-    if (registerIndex !== -1) {
-        const result = results[registerIndex][resultColumn];
-        console.log(`Result for Register Number ${registerNumber}: ${result}`);
-    } else {
-        console.log(`Register Number ${registerNumber} not found.`);
-    }
-}
-
-// Example: Call the function with a specific register number and file path
-const targetRegisterNumber = '12345'; // Replace with the desired register number
-const excelFilePath = 'path/to/your/excel/file.xlsx'; // Replace with the path to your Excel file
-
-displayResult(targetRegisterNumber, excelFilePath);
+                if (result.success) {
+                    document.getElementById('resultDisplay').innerText = `Result: ${result.data}`;
+                } else {
+                    document.getElementById('resultDisplay').innerText = result.message;
+                }
+            } catch (error) {
+                console.error('Error fetching result:', error);
+            }
+        }
+    </script>
+</body>
+</html>
